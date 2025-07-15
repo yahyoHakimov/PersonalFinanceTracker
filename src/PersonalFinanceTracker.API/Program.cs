@@ -20,7 +20,24 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // Configure Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    options.UseNpgsql(connectionString, npgsqlOptions =>
+    {
+        npgsqlOptions.CommandTimeout(60); // 60 seconds timeout
+        npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorCodesToAdd: null);
+    });
+
+    // Enable sensitive data logging in development
+    if (builder.Environment.IsDevelopment())
+    {
+        options.EnableSensitiveDataLogging();
+        options.EnableDetailedErrors();
+    }
+});
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 // Get JWT settings from configuration
@@ -58,7 +75,6 @@ builder.Services.AddSwaggerGen(c =>
         Description = "RESTful API for personal finance management"
     });
 
-    // Add JWT Authentication to Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token",
@@ -87,15 +103,17 @@ builder.Services.AddSwaggerGen(c =>
 // Configure CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("DevelopmentPolicy", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:5173")
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials()
+              .WithExposedHeaders("*") // Expose all headers to the client
+              .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
     });
 });
 
-// Configure Cache
 builder.Services.AddDistributedMemoryCache();
 
 var app = builder.Build();
@@ -107,17 +125,39 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Personal Finance Tracker API v1");
-        c.RoutePrefix = string.Empty; // Set Swagger UI at app root
+        c.RoutePrefix = string.Empty;
     });
 }
+
+// CORS FIRST
+app.UseCors("DevelopmentPolicy");
+
+app.Use(async (context, next) =>
+{
+    var origin = context.Request.Headers.Origin.FirstOrDefault();
+
+    if (!string.IsNullOrEmpty(origin) && origin == "http://localhost:5173")
+    {
+        context.Response.Headers.Append("Access-Control-Allow-Origin", origin);
+        context.Response.Headers.Append("Access-Control-Allow-Credentials", "true");
+        context.Response.Headers.Append("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        context.Response.Headers.Append("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, Origin, X-Requested-With");
+    }
+
+    if (context.Request.Method == "OPTIONS")
+    {
+        context.Response.StatusCode = 200;
+        return;
+    }
+
+    await next();
+});
 
 // Custom middleware
 app.UseCustomExceptionHandling();
 app.UseAuditing();
 
-app.UseHttpsRedirection();
-app.UseCors("AllowAll");
-
+// Authentication and Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 

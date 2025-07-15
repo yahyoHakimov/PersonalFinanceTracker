@@ -117,15 +117,35 @@ namespace PersonalFinanceTracker.Infrastructure.Services
         {
             try
             {
-                if (await _categoryRepository.IsNameExistsAsync(request.Name, userId, null, cancellationToken))
+                // Validate input
+                if (string.IsNullOrWhiteSpace(request.Name))
                 {
-                    return Result<CategoryDto>.Failure("Category with this name already exists");
+                    return Result<CategoryDto>.Failure("Category name is required");
+                }
+
+                if (request.Name.Length > 100) // Assuming max length
+                {
+                    return Result<CategoryDto>.Failure("Category name is too long (maximum 100 characters)");
+                }
+
+                // Add timeout for the name existence check
+                try
+                {
+                    if (await _categoryRepository.IsNameExistsAsync(request.Name, userId, null, cancellationToken))
+                    {
+                        return Result<CategoryDto>.Failure("Category with this name already exists");
+                    }
+                }
+                catch (TimeoutException)
+                {
+                    _logger.LogWarning("Timeout when checking category name existence for user {UserId}", userId);
+                    return Result<CategoryDto>.Failure("Operation timed out. Please try again.");
                 }
 
                 var category = new Category
                 {
                     Name = request.Name.Trim(),
-                    Color = request.Color,
+                    Color = request.Color ?? "#000000",
                     UserId = userId,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -133,12 +153,25 @@ namespace PersonalFinanceTracker.Infrastructure.Services
                 var createdCategory = await _categoryRepository.CreateAsync(category, cancellationToken);
                 var result = _mapper.Map<CategoryDto>(createdCategory);
 
-                // Log audit
-                await _auditService.LogAsync(userId, AuditActions.CREATE, EntityNames.CATEGORY,
-                    createdCategory.Id, null, result, cancellationToken);
+                // Log audit (with timeout protection)
+                try
+                {
+                    await _auditService.LogAsync(userId, AuditActions.CREATE, EntityNames.CATEGORY,
+                        createdCategory.Id, null, result, cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.LogWarning("Audit logging was cancelled for category creation {CategoryId}", createdCategory.Id);
+                    // Don't fail the entire operation if audit logging fails
+                }
 
                 _logger.LogInformation("Category {CategoryName} created for user {UserId}", request.Name, userId);
                 return Result<CategoryDto>.Success(result);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogInformation("Category creation was cancelled for user {UserId}", userId);
+                return Result<CategoryDto>.Failure("Operation was cancelled");
             }
             catch (Exception ex)
             {

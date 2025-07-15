@@ -114,6 +114,22 @@ namespace PersonalFinanceTracker.API.Controllers
                 ApiResponse<CategoryDto>.SuccessResponse(result.Data!, "Category created successfully"));
         }
 
+        [HttpPost("test-create")]
+        [AllowAnonymous]  // Remove auth requirement temporarily
+        public async Task<IActionResult> TestCreate([FromBody] CreateCategoryRequest request)
+        {
+            // Hardcode user ID for testing
+            var userId = 4; // Your user ID
+            var result = await _categoryService.CreateAsync(userId, request, CancellationToken.None);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(ApiResponse<object>.ErrorResponse(result.Error!));
+            }
+
+            return Ok(ApiResponse<CategoryDto>.SuccessResponse(result.Data!, "Test category created"));
+        }
+
         /// <summary>
         /// Update an existing category
         /// </summary>
