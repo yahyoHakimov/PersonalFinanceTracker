@@ -1,6 +1,6 @@
 ﻿# Personal Finance Tracker 💰
 
-A comprehensive **Personal Finance Management System** built with **ASP.NET Core 7.0** following **Clean Architecture** principles. Track your income, expenses, and financial goals with powerful analytics and reporting features.
+A comprehensive **Personal Finance Management System** built with **ASP.NET Core 8.0+** following **Clean Architecture** principles. Track your income, expenses, and financial goals with powerful analytics and reporting features.
 
 ## 🚀 Features
 
