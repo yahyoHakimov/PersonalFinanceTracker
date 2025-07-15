@@ -59,10 +59,15 @@ dotnet run
 - API Base URL: `http://localhost:5184/api`
 
 
-5. **Run the UI**
+5. **Set up UI**
 ```bash
+# Run npm
 cd src/PersonalFinanceTracker.UI
+```
 
+
+6. **Run the UI**
+```bash
 npm install
 ```
 - Swagger UI: `http://localhost:5184`
