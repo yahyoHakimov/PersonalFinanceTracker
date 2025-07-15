@@ -1,281 +1,159 @@
-﻿# Personal Finance Tracker 💰
+﻿# Personal Finance Tracker API
 
-A comprehensive **Personal Finance Management System** built with **ASP.NET Core 8.0+** following **Clean Architecture** principles. Track your income, expenses, and financial goals with powerful analytics and reporting features.
+A RESTful API for personal finance management built with ASP.NET Core 8.0, featuring JWT authentication, role-based access control, and comprehensive financial tracking capabilities.
 
-## 🚀 Features
+## Features
 
-### ✅ **Completed Features**
-- **🔐 Authentication & Authorization**
-  - JWT + Refresh Token implementation
-  - Role-based Access Control (Admin/User)
-  - Secure password hashing with BCrypt
-  - Token refresh mechanism
+- 🔐 **Authentication** - JWT tokens with refresh token support
+- 👥 **Role-Based Access Control** - Admin and User roles
+- 📊 **Transaction Management** - Create, read, update, delete transactions
+- 🏷️ **Category Management** - Organize expenses by categories
+- 📈 **Financial Reports** - Monthly balance and statistics
+- 🗃️ **Audit Logging** - Track all user activities
+- 📋 **Excel Export** - Generate financial reports
+- 🔄 **Soft Delete** - Data recovery capabilities
+- 🎯 **Optimistic Concurrency** - Prevent data conflicts
 
-- **💳 Transaction Management**
-  - Full CRUD operations for transactions
-  - Income and expense tracking
-  - Transaction categorization
-  - Soft delete functionality
+## Tech Stack
 
-- **📊 Category Management**
-  - Custom category creation
-  - Color-coded categories
-  - Category-based organization
+- **Backend**: ASP.NET Core 8.0
+- **Database**: PostgreSQL with Entity Framework Core
+- **Authentication**: JWT Bearer tokens
+- **Caching**: Redis/In-Memory cache
+- **Logging**: Serilog structured logging
+- **Documentation**: Swagger/OpenAPI
+- **Testing**: xUnit with integration tests
+- **Containerization**: Docker & Docker Compose
 
-- **🛡️ Security & Data Integrity**
-  - Optimistic concurrency control
-  - Comprehensive audit logging
-  - Data validation with FluentValidation
-
-- **🏗️ Architecture**
-  - Clean Architecture implementation
-  - Repository Pattern
-  - Dependency Injection
-  - Exception handling middleware
-
-### 🚧 **In Development**
-- Advanced filtering and search
-- Financial analytics and reporting
-- Excel export functionality
-- Background job processing
-- Redis caching integration
-
-## 🛠️ Tech Stack
-
-### **Backend**
-- **ASP.NET Core 7.0** - Web API Framework
-- **Entity Framework Core** - ORM
-- **PostgreSQL** - Primary Database
-- **JWT** - Authentication
-- **AutoMapper** - Object Mapping
-- **FluentValidation** - Input Validation
-
-### **Architecture Patterns**
-- **Clean Architecture** - Dependency separation
-- **Repository Pattern** - Data access abstraction
-- **CQRS** - Command Query Responsibility Segregation
-- **Mediator Pattern** - Request/Response handling
-
-### **Documentation**
-- **Swagger/OpenAPI** - API Documentation
-- **JWT Integration** - Swagger Authentication
-
-## 📁 Project Structure
-
-```
-PersonalFinanceTracker/
-├── src/
-│   ├── PersonalFinanceTracker.API/          # Web API layer
-│   ├── PersonalFinanceTracker.Application/  # Business logic
-│   ├── PersonalFinanceTracker.Domain/       # Domain entities
-│   ├── PersonalFinanceTracker.Infrastructure/ # Data access, external services
-│   └── PersonalFinanceTracker.Worker/       # Background services
-├── tests/
-│   ├── PersonalFinanceTracker.Tests.Unit/
-│   └── PersonalFinanceTracker.Tests.Integration/
-├── docker-compose.yml
-├── README.md
-└── .gitignore
-```
-
-## 🚀 Getting Started
+## Quick Start
 
 ### Prerequisites
-- **.NET 7.0 SDK** or higher
-- **PostgreSQL** database
-- **Visual Studio 2022** or **VS Code**
+
+- .NET 8.0 SDK
+- PostgreSQL 12+
+- Git
 
 ### Installation
 
 1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/personal-finance-tracker.git
-   cd personal-finance-tracker
-   ```
-
-2. **Set up PostgreSQL Database**
-   - Create a new PostgreSQL database
-   - Update connection string in `appsettings.json`
-
-3. **Configure Application Settings**
-   ```json
-   {
-     "ConnectionStrings": {
-       "DefaultConnection": "Host=localhost;Database=PersonalFinanceDB;Username=your_username;Password=your_password"
-     },
-     "JwtSettings": {
-       "SecretKey": "your-secret-key-here",
-       "Issuer": "PersonalFinanceTracker",
-       "Audience": "PersonalFinanceTracker",
-       "ExpiryMinutes": 60
-     }
-   }
-   ```
-
-4. **Run Database Migrations**
-   ```bash
-   dotnet ef database update --project src/PersonalFinanceTracker.Infrastructure --startup-project src/PersonalFinanceTracker.API
-   ```
-
-5. **Build and Run**
-   ```bash
-   dotnet build
-   dotnet run --project src/PersonalFinanceTracker.API
-   ```
-
-6. **Access the API**
-   - API: `https://localhost:7070`
-   - Swagger Documentation: `https://localhost:7070/swagger`
-
-## 📖 API Documentation
-
-### Authentication Endpoints
-```http
-POST /api/auth/register    # User registration
-POST /api/auth/login       # User login
-POST /api/auth/refresh     # Refresh token
-POST /api/auth/logout      # User logout
+```bash
+git clone https://github.com/yahyoHakimov/PersonalFinanceTracker.git
+cd src
 ```
 
-### Transaction Endpoints
-```http
-GET    /api/transactions           # Get all transactions (paginated)
-GET    /api/transactions/{id}      # Get transaction by ID
-POST   /api/transactions           # Create new transaction
-PUT    /api/transactions/{id}      # Update transaction
-DELETE /api/transactions/{id}      # Delete transaction
+2. **Set up the database**
+```bash
+# Update connection string in appsettings.Development.json
+# Then run migrations
+cd src/PersonalFinanceTracker.API
+dotnet ef database update --project ../PersonalFinanceTracker.Infrastructure
 ```
 
-### Category Endpoints
-```http
-GET    /api/categories        # Get all categories
-GET    /api/categories/{id}   # Get category by ID
-POST   /api/categories        # Create new category
-PUT    /api/categories/{id}   # Update category
-DELETE /api/categories/{id}   # Delete category
+3. **Run the application**
+```bash
+dotnet run
 ```
 
-### Request/Response Examples
+4. **Access the API**
+- Swagger UI: `http://localhost:5184`
+- API Base URL: `http://localhost:5184/api`
 
-**Create Transaction:**
-```json
-POST /api/transactions
-{
-  "amount": 150.00,
-  "type": "Expense",
-  "categoryId": 1,
-  "note": "Grocery shopping",
-  "date": "2024-01-15T10:30:00Z"
-}
-```
+## Configuration
 
-**Response:**
+Update `appsettings.json` with your settings:
+
 ```json
 {
-  "id": 1,
-  "amount": 150.00,
-  "type": "Expense",
-  "categoryId": 1,
-  "note": "Grocery shopping",
-  "createdAt": "2024-01-15T10:30:00Z",
-  "category": {
-    "id": 1,
-    "name": "Groceries",
-    "color": "#FF6B6B"
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Database=PersonalFinanceTracker;Username=postgres;Password=your_password;Port=5432"
+  },
+  "JwtSettings": {
+    "SecretKey": "your-secret-key-32-characters-minimum",
+    "Issuer": "PersonalFinanceTracker",
+    "Audience": "PersonalFinanceTracker-Users",
+    "ExpiryMinutes": 60
   }
 }
 ```
 
-## 🔧 Database Schema
+## API Endpoints
 
-### Core Entities
-- **User** - User account information
-- **Category** - Transaction categories
-- **Transaction** - Financial transactions
-- **AuditLog** - System audit trail
+### Authentication
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login user
+- `POST /api/auth/refresh` - Refresh JWT token
+- `GET /api/auth/me` - Get current user info
 
-### Key Features
-- **Soft Delete** - Logical deletion of records
-- **Audit Logging** - Complete change tracking
-- **Optimistic Concurrency** - Data consistency
-- **Row Versioning** - Concurrent update handling
+### Categories
+- `GET /api/categories` - Get user categories
+- `POST /api/categories` - Create category
+- `PUT /api/categories/{id}` - Update category
+- `DELETE /api/categories/{id}` - Delete category
 
-## 🧪 Testing
+### Transactions
+- `GET /api/transactions` - Get user transactions
+- `POST /api/transactions` - Create transaction
+- `PUT /api/transactions/{id}` - Update transaction
+- `DELETE /api/transactions/{id}` - Delete transaction
+- `GET /api/transactions/monthly-balance/{year}/{month}` - Get monthly balance
 
-### Running Tests
+## Usage Example
+
+1. **Register a user**
 ```bash
-# Unit Tests
-dotnet test tests/PersonalFinanceTracker.Tests.Unit
-
-# Integration Tests
-dotnet test tests/PersonalFinanceTracker.Tests.Integration
-
-# All Tests
-dotnet test
+curl -X POST http://localhost:5184/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "john_doe",
+    "email": "john@example.com",
+    "password": "Password123!",
+    "confirmPassword": "Password123!"
+  }'
 ```
 
-## 📊 Project Status
+2. **Create a category**
+```bash
+curl -X POST http://localhost:5184/api/categories \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Food",
+    "color": "#FF6B6B"
+  }'
+```
 
-| Feature | Status | Progress |
-|---------|---------|----------|
-| Core Architecture | ✅ Complete | 100% |
-| Authentication | ✅ Complete | 100% |
-| Basic CRUD | ✅ Complete | 100% |
-| Advanced Features | 🟡 Partial | 60% |
-| Analytics/Reports | 🔴 Planned | 0% |
-| Testing | 🔴 Planned | 0% |
-| Deployment | 🔴 Planned | 0% |
+3. **Add a transaction**
+```bash
+curl -X POST http://localhost:5184/api/transactions \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 25.50,
+    "type": 2,
+    "categoryId": 1,
+    "note": "Lunch at restaurant"
+  }'
+```
 
-**Overall Progress: ~40% Complete**
+## Docker Deployment
 
-## 🗺️ Roadmap
+```bash
+# Build and run with Docker Compose
+docker-compose up --build
 
-### Phase 1: Core Business Features
-- [ ] Financial summary endpoints
-- [ ] Advanced filtering & search
-- [ ] Data seeding with sample data
+# Or run individual services
+docker build -t finance-tracker .
+docker run -p 5184:80 finance-tracker
+```
 
-### Phase 2: Background Processing
-- [ ] Background worker service
-- [ ] Excel export functionality
-- [ ] Advanced analytics
+## Testing
 
-### Phase 3: Production Readiness
-- [ ] Comprehensive testing
-- [ ] Logging & monitoring
-- [ ] Performance optimization
+```bash
+# Run unit tests
+dotnet test src/PersonalFinanceTracker.Tests.Unit
 
-### Phase 4: Deployment
-- [ ] Docker containerization
-- [ ] Redis cache integration
-- [ ] Production deployment
+# Run integration tests
+dotnet test src/PersonalFinanceTracker.Tests.Integration
+```
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👨‍💻 Author
-
-**Your Name**
-- GitHub: [@yahyoHakimov](https://github.com/yahyoHakimov)
-- Email: your.email@example.com
-
-## 📞 Support
-
-If you have any questions or need help with the project, please:
-1. Check the [Issues](https://github.com/yahyoHakimov/Pers
-1. onalFinanceTracker/issues) page
-2. Create a new issue if your question isn't already answered
-3. Contact me directly via email
-
----
-
-⭐ **If you find this project helpful, please give it a star!** ⭐
+## Thank You
