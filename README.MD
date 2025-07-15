@@ -271,7 +271,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 If you have any questions or need help with the project, please:
-1. Check the [Issues](https://github.com/yahyoHakimov/PerconalFinanceTracker/issues) page
+1. Check the [Issues](https://github.com/yahyoHakimov/Pers
+1. onalFinanceTracker/issues) page
 2. Create a new issue if your question isn't already answered
 3. Contact me directly via email
 

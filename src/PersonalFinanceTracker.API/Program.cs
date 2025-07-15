@@ -21,6 +21,7 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 // Configure Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 // Get JWT settings from configuration
 var jwtSection = builder.Configuration.GetSection("JwtSettings");

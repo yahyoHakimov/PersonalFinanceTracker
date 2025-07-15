@@ -37,7 +37,8 @@ namespace PersonalFinanceTracker.Infrastructure.Data.Configurations
 
             // Optimistic Concurrency
             builder.Property(t => t.RowVersion)
-                .IsRowVersion();
+                .IsRowVersion()
+                .ValueGeneratedOnAddOrUpdate(); // This ensures DB generates the value
 
             // Indexes
             builder.HasIndex(t => t.UserId);

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PersonalFinanceTracker.Domain.Common;
 using PersonalFinanceTracker.Domain.Entities;
 using PersonalFinanceTracker.Infrastructure.Data.Configurations;
 using System;
@@ -35,6 +36,47 @@ namespace PersonalFinanceTracker.Infrastructure.Data
             modelBuilder.Entity<User>().HasQueryFilter(e => !e.IsDeleted);
             modelBuilder.Entity<Category>().HasQueryFilter(e => !e.IsDeleted);
             modelBuilder.Entity<Transaction>().HasQueryFilter(e => !e.IsDeleted);
+        }
+
+        public override int SaveChanges()
+        {
+            ConvertDateTimesToUtc();
+            return base.SaveChanges();
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            ConvertDateTimesToUtc();
+            return base.SaveChangesAsync(cancellationToken);
+        }
+
+        private void ConvertDateTimesToUtc()
+        {
+            var entries = ChangeTracker
+                .Entries()
+                .Where(e => e.Entity is BaseEntity && (
+                    e.State == EntityState.Added ||
+                    e.State == EntityState.Modified));
+
+            foreach (var entityEntry in entries)
+            {
+                var entity = (BaseEntity)entityEntry.Entity;
+
+                if (entityEntry.State == EntityState.Added)
+                {
+                    entity.CreatedAt = DateTime.SpecifyKind(entity.CreatedAt, DateTimeKind.Utc);
+                }
+
+                if (entityEntry.State == EntityState.Modified)
+                {
+                    entity.UpdatedAt = DateTime.UtcNow;
+                }
+
+                if (entity.DeletedAt.HasValue)
+                {
+                    entity.DeletedAt = DateTime.SpecifyKind(entity.DeletedAt.Value, DateTimeKind.Utc);
+                }
+            }
         }
     }
 }

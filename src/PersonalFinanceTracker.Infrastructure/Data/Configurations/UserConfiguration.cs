@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PersonalFinanceTracker.Domain.Entities;
 
 namespace PersonalFinanceTracker.Infrastructure.Data.Configurations
@@ -27,6 +28,15 @@ namespace PersonalFinanceTracker.Infrastructure.Data.Configurations
 
             builder.Property(u => u.RefreshToken)
                 .HasMaxLength(500);
+
+            // Configure DateTime properties to use UTC
+            var utcConverter = new ValueConverter<DateTime, DateTime>(
+                v => v.ToUniversalTime(),
+                v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+            var utcNullableConverter = new ValueConverter<DateTime?, DateTime?>(
+                v => v.HasValue ? v.Value.ToUniversalTime() : v,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v);
 
             builder.Property(u => u.CreatedAt)
                 .IsRequired();
