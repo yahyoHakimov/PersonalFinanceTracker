@@ -58,6 +58,17 @@ dotnet run
 - Swagger UI: `http://localhost:5184`
 - API Base URL: `http://localhost:5184/api`
 
+
+5. **Run the UI**
+```bash
+cd src/PersonalFinanceTracker.UI
+
+npm install
+```
+- Swagger UI: `http://localhost:5184`
+- API Base URL: `http://localhost:5184/api`
+- UI: `http://localhost:7000`
+
 ## Configuration
 
 Update `appsettings.json` with your settings:
