@@ -19,7 +19,7 @@ namespace PersonalFinanceTracker.Domain.Entities
         public string UserAgent { get; set; } = string.Empty;
 
         // Navigation properties
-        public User User { get; set; } = null!;
+        public User? User { get; set; } = null!;
 
         // Business logic methods
         public bool IsCreateAction() => Action.Equals("CREATE", StringComparison.OrdinalIgnoreCase);

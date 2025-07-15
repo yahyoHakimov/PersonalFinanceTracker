@@ -55,6 +55,12 @@ namespace PersonalFinanceTracker.Infrastructure.Data.Configurations
                 .WithOne(a => a.User)
                 .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasMany(u => u.AuditLogs)
+            .WithOne(a => a.User)
+            .HasForeignKey(a => a.UserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
         }
     }
 }
