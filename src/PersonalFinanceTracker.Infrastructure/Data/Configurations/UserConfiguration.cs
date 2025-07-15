@@ -1,11 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PersonalFinanceTracker.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PersonalFinanceTracker.Infrastructure.Data.Configurations
 {
@@ -62,3 +57,4 @@ namespace PersonalFinanceTracker.Infrastructure.Data.Configurations
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }
+}
