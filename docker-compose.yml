@@ -1,3 +1,4 @@
+# docker-compose.yml - Production-ready configuration
 services:
   # PostgreSQL Database
   postgres:
@@ -6,19 +7,28 @@ services:
     environment:
       POSTGRES_DB: PersonalFinanceTracker
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C"
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - pft_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d PersonalFinanceTracker"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
 
   # Redis Cache
   redis:
@@ -28,6 +38,8 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
     networks:
       - pft_network
     healthcheck:
@@ -35,29 +47,51 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
 
   # API Service
   api:
     build:
       context: .
       dockerfile: src/PersonalFinanceTracker.API/Dockerfile
+      target: final
     container_name: pft_api
     ports:
       - "8080:80"
+      - "8443:443"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=PersonalFinanceTracker;Username=postgres;Password=postgres123
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=PersonalFinanceTracker;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres123};Include Error Detail=true
       - Redis__ConnectionString=redis:6379
-      - JWT__SecretKey=your-super-secret-jwt-key-here-must-be-at-least-32-characters-long
+      - Redis__Database=0
+      - Redis__AbortOnConnectFail=false
+      - JWT__SecretKey=${JWT_SECRET_KEY:-your-super-secret-jwt-key-here-must-be-at-least-32-characters-long}
       - JWT__Issuer=PersonalFinanceTracker
       - JWT__Audience=PersonalFinanceTracker
       - JWT__ExpirationMinutes=60
       - JWT__RefreshTokenExpirationDays=7
+      - Serilog__MinimumLevel=Information
+      - Serilog__WriteTo__0__Name=Console
+      - Serilog__WriteTo__1__Name=File
+      - Serilog__WriteTo__1__Args__path=logs/api-.log
+      - Serilog__WriteTo__1__Args__rollingInterval=Day
+      - BackgroundWorker__Enabled=false
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      - api_logs:/app/logs
+      - nuget_cache:/root/.nuget/packages:ro
     networks:
       - pft_network
     healthcheck:
@@ -66,45 +100,92 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
 
-  # Worker Service
+  # Background Worker Service
   worker:
     build:
       context: .
       dockerfile: src/PersonalFinanceTracker.Worker/Dockerfile
+      target: final
     container_name: pft_worker
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=PersonalFinanceTracker;Username=postgres;Password=postgres123
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=PersonalFinanceTracker;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres123};Include Error Detail=true
       - Redis__ConnectionString=redis:6379
+      - Redis__Database=0
+      - Redis__AbortOnConnectFail=false
+      - Serilog__MinimumLevel=Information
+      - Serilog__WriteTo__0__Name=Console
+      - Serilog__WriteTo__1__Name=File
+      - Serilog__WriteTo__1__Args__path=logs/worker-.log
+      - Serilog__WriteTo__1__Args__rollingInterval=Day
+      - Worker__StatisticsInterval=00:01:00
+      - Worker__ExcelExportEnabled=true
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      - worker_logs:/app/logs
+      - excel_exports:/app/exports
+      - nuget_cache:/root/.nuget/packages:ro
+    networks:
+      - pft_network
+    healthcheck:
+      test: ["CMD", "ps", "aux", "|", "grep", "PersonalFinanceTracker.Worker", "|", "grep", "-v", "grep"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # Monitoring - Health Check Dashboard (Optional)
+  health-dashboard:
+    image: nginx:alpine
+    container_name: pft_health_dashboard
+    ports:
+      - "8090:80"
+    volumes:
+      - ./monitoring/health-dashboard.html:/usr/share/nginx/html/index.html:ro
+      - ./monitoring/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+      - worker
     networks:
       - pft_network
     restart: unless-stopped
 
-  # UI Service
-  ui:
-    build:
-      context: ./src/PersonalFinanceTracker.UI
-      dockerfile: Dockerfile
-    container_name: pft_ui
-    ports:
-      - "3000:80"
-    depends_on:
-      - api
-    networks:
-      - pft_network
-    environment:
-      - VITE_API_URL=http://localhost:8080/api
-
 volumes:
   postgres_data:
+    driver: local
   redis_data:
+    driver: local
+  api_logs:
+    driver: local
+  worker_logs:
+    driver: local
+  excel_exports:
+    driver: local
+  nuget_cache:
+    driver: local
 
 networks:
   pft_network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

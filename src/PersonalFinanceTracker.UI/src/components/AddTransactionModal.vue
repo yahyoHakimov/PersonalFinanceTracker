@@ -128,70 +128,62 @@ export default {
     const errors = ref({})
     const isLoading = ref(false)
     
-    const handleSubmit = async () => {
-      errors.value = {}
-      
-      // Basic validation - only validate fields that exist in the form
-      if (!form.amount || form.amount <= 0) {
-        errors.value.amount = 'Amount must be greater than 0'
-      }
-      
-      if (!form.categoryId) {
-        errors.value.categoryId = 'Category is required'
-      }
-      
-      if (Object.keys(errors.value).length > 0) {
-        return
-      }
-      
-      try {
-        isLoading.value = true
-        
-        // Prepare data to match your C# DTO
-        const transactionData = {
-          amount: parseFloat(form.amount),
-          type: form.type === 'income' ? 0 : 1, // Map to enum: Income = 0, Expense = 1
-          categoryId: parseInt(form.categoryId),
-          note: form.notes || null // Map 'notes' to 'note' to match C# DTO
-        }
-        
-        console.log('Form data before mapping:', form)
-        console.log('Sending transaction data:', transactionData)
-        console.log('Type mapping:', form.type, '->', transactionData.type)
-        
-        const result = await transactionStore.createTransaction(transactionData)
-        
-        if (result.success) {
-          toastStore.success('Transaction added successfully!')
-          emit('transaction-added')
-          emit('close')
-        } else {
-          toastStore.error(result.message || 'Failed to add transaction')
-        }
-      } catch (error) {
-        console.error('Transaction creation error:', error)
-        
-        // Log detailed error information
-        if (error.response?.data) {
-          console.error('Server response:', error.response.data)
-          console.error('Status:', error.response.status)
-          
-          // Show validation errors if available
-          if (error.response.data.errors) {
-            console.error('Validation errors:', error.response.data.errors)
-            
-            // Log each validation error in detail
-            Object.keys(error.response.data.errors).forEach(key => {
-              console.error(`Field ${key}:`, error.response.data.errors[key])
-            })
-          }
-        }
-        
-        toastStore.error('Failed to add transaction')
-      } finally {
-        isLoading.value = false
+    // In your AddTransactionModal component
+const handleSubmit = async () => {
+  errors.value = {}
+  
+  // Basic validation
+  if (!form.amount || form.amount <= 0) {
+    errors.value.amount = 'Amount must be greater than 0'
+  }
+  
+  if (!form.categoryId) {
+    errors.value.categoryId = 'Category is required'
+  }
+  
+  if (Object.keys(errors.value).length > 0) {
+    return
+  }
+  
+  try {
+    isLoading.value = true
+    
+    const transactionData = {
+      amount: parseFloat(form.amount),
+      type: form.type === 'income' ? 0 : 1,
+      categoryId: parseInt(form.categoryId),
+      note: form.notes || null
+    }
+    
+    console.log('Sending transaction data:', transactionData)
+    
+    const result = await transactionStore.createTransaction(transactionData)
+    
+    if (result.success) {
+      toastStore.success('Transaction added successfully!')
+      emit('transaction-added')
+      emit('close')
+    } else {
+      // Handle timeout specifically
+      if (result.isTimeout) {
+        toastStore.warning('Request timeout - please check your transactions list to see if it was created')
+      } else {
+        toastStore.error(result.message || 'Failed to add transaction')
       }
     }
+  } catch (error) {
+    console.error('Transaction creation error:', error)
+    
+    // Check if it's a timeout error
+    if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
+      toastStore.warning('Request timeout - please refresh to see if transaction was created')
+    } else {
+      toastStore.error('Failed to add transaction')
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
     
     onMounted(async () => {
       console.log('Loading categories for transaction modal...')

@@ -154,11 +154,6 @@ namespace PersonalFinanceTracker.Infrastructure.Services
                     return Result<TransactionDto>.Failure("Transaction not found");
                 }
 
-                // Check optimistic concurrency
-                if (!transaction.RowVersion.SequenceEqual(request.RowVersion))
-                {
-                    return Result<TransactionDto>.Failure("Transaction was modified by another user. Please refresh and try again.");
-                }
 
                 // Validate category belongs to user
                 var category = await _categoryRepository.GetByIdAsync(request.CategoryId, userId, cancellationToken);

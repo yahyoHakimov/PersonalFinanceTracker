@@ -33,6 +33,11 @@ namespace PersonalFinanceTracker.Application.Common.Models
                 Errors = errors ?? new List<string>()
             };
         }
+
+        public object Should()
+        {
+            throw new NotImplementedException();
+        }
     }
 
 }

@@ -52,19 +52,44 @@ export const useTransactionStore = defineStore('transaction', () => {
   }
 
   const createTransaction = async (transactionData) => {
-    try {
-      const response = await apiClient.post('/transactions', transactionData)
-      
+  try {
+    const response = await apiClient.post('/transactions', transactionData)
+    
+    // Check if response is successful
+    if (response.status === 200 || response.status === 201) {
       if (response.data.success) {
         transactions.value.unshift(response.data.data)
       }
       
-      return response.data
-    } catch (error) {
-      console.error('Error creating transaction:', error)
-      throw error
+      return {
+        success: true,
+        data: response.data.data
+      }
+    } else {
+      return {
+        success: false,
+        message: 'Failed to create transaction'
+      }
+    }
+  } catch (error) {
+    console.error('Error creating transaction:', error)
+    
+    // Check if it's a timeout error
+    if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
+      return {
+        success: false,
+        message: 'Request timeout - please check if transaction was created',
+        isTimeout: true
+      }
+    }
+    
+    // Return error response instead of throwing
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Failed to create transaction'
     }
   }
+}
 
   const updateTransaction = async (id, transactionData) => {
     try {

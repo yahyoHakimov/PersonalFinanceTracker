@@ -15,7 +15,6 @@ namespace PersonalFinanceTracker.Domain.Entities
         public int CategoryId { get; set; }
         public int UserId { get; set; }
         public string? Note { get; set; }
-        public byte[] RowVersion { get; set; } = null!;
 
         // Navigation properties
         public Category Category { get; set; } = null!;

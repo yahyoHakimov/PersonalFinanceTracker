@@ -35,10 +35,10 @@ namespace PersonalFinanceTracker.Infrastructure.Data.Configurations
             builder.Property(t => t.CreatedAt)
                 .IsRequired();
 
-            // Optimistic Concurrency
-            builder.Property(t => t.RowVersion)
-                .IsRowVersion()
-                .ValueGeneratedOnAddOrUpdate(); // This ensures DB generates the value
+            builder.Property<uint>("xmin")
+                .HasColumnType("xid")
+                .ValueGeneratedOnAddOrUpdate()
+                .IsConcurrencyToken();
 
             // Indexes
             builder.HasIndex(t => t.UserId);

@@ -1,175 +1,188 @@
-﻿# Personal Finance Tracker API
+﻿# Personal Finance Tracker
 
-A RESTful API for personal finance management built with ASP.NET Core 8.0, featuring JWT authentication, role-based access control, and comprehensive financial tracking capabilities.
+Shaxsiy moliyaviy boshqaruv uchun to'liq RESTful API. Bu xavfsiz, monitoring va distributed arxitekturaga ega tizim.
 
-## Features
+## 🎯 Interview uchun bajarilgan loyiha maqsadi
 
-- 🔐 **Authentication** - JWT tokens with refresh token support
-- 👥 **Role-Based Access Control** - Admin and User roles
-- 📊 **Transaction Management** - Create, read, update, delete transactions
-- 🏷️ **Category Management** - Organize expenses by categories
-- 📈 **Financial Reports** - Monthly balance and statistics
-- 🗃️ **Audit Logging** - Track all user activities
-- 📋 **Excel Export** - Generate financial reports
-- 🔄 **Soft Delete** - Data recovery capabilities
-- 🎯 **Optimistic Concurrency** - Prevent data conflicts
+Foydalanuvchilarga real production muhitiga yaqin, xavfsiz, monitoring va distributed arxitekturaga ega RESTful API yaratish. Kengaytirilgan biznes qoidalari, kesh, audit log, testlar va container texnologiyalarini qamrab oladi.
 
-## Tech Stack
+## ⚡ Tezkor ishga tushirish. Internet tezligi yaxshi bo'lmasa shu usuli qulay :)
 
-- **Backend**: ASP.NET Core 8.0
-- **Database**: PostgreSQL with Entity Framework Core
-- **Authentication**: JWT Bearer tokens
-- **Caching**: Redis/In-Memory cache
-- **Logging**: Serilog structured logging
-- **Documentation**: Swagger/OpenAPI
-- **Testing**: xUnit with integration tests
-- **Containerization**: Docker & Docker Compose
+### 1-usul: Development Setup ()
 
-## Quick Start
-
-### Prerequisites
-
-- .NET 8.0 SDK
-- PostgreSQL 12+
-- Git
-
-### Installation
-
-1. **Clone the repository**
 ```bash
-git clone https://github.com/yahyoHakimov/PersonalFinanceTracker.git
-cd src
-```
+# Infrastructure xizmatlarini ishga tushiring
+docker-compose -f docker-compose.fast.yml up -d
 
-2. **Set up the database**
-```bash
-# Update connection string in appsettings.Development.json
-# Then run migrations
+# API ni local ishga tushiring
 cd src/PersonalFinanceTracker.API
-dotnet ef database update --project ../PersonalFinanceTracker.Infrastructure
-```
+dotnet ef database update
+dotnet run
 
-3. **Run the application**
-```bash
+# Worker ni ishga tushiring (ixtiyoriy)
+cd src/PersonalFinanceTracker.Worker
 dotnet run
 ```
 
-4. **Access the API**
-- Swagger UI: `http://localhost:5184`
-- API Base URL: `http://localhost:5184/api`
+### 2-usul: To'liq Docker setup. Bu Docker hamma narsani build qilguncha biroz vaqt oladi
 
-
-5. **Set up UI**
 ```bash
-# Run npm
-cd src/PersonalFinanceTracker.UI
+# Barcha xizmatlarni ishga tushiring
+docker-compose up --build
 ```
 
+## 🔧 Texnik stack
 
-6. **Run the UI**
-```bash
-npm install
-```
-- Swagger UI: `http://localhost:5184`
-- API Base URL: `http://localhost:5184/api`
-- UI: `http://localhost:7000`
+- **Backend**: ASP.NET Core 8.0, C#
+- **Database**: PostgreSQL 15
+- **Cache**: Redis 7
+- **ORM**: Entity Framework Core
+- **Auth**: JWT + Refresh Tokens
+- **Testing**: xUnit
+- **Logging**: Serilog
+- **Containerization**: Docker Compose
 
-## Configuration
+## 📋 Amalga oshirilgan talablar
 
-Update `appsettings.json` with your settings:
+### ✅ Asosiy funksiyalar
+- **ASP.NET Core Web API** loyihasi
+- **JWT + Refresh token** autentifikatsiya
+- **RBAC** (admin va oddiy foydalanuvchi rollari)
+- **Transaction CRUD** operatsiyalari
+- **Category CRUD** operatsiyalari
+- **Filterlash, sortlash, pagination**
+- **Oylik moliyaviy summary**
+- **Statistika API** va Excel export (worker orqali)
+- **Soft delete** mexanizmi
+- **Audit log** barcha operatsiyalar uchun
+- **Optimistic concurrency** (RowVersion)
+- **Background worker** xizmati
+- **Redis caching**
+- **Structured logging** (Serilog)
+- **Health check** endpointlar
+- **Docker Compose** konfiguratsiyasi
+- **Unit va integration testlar**
+- **Swagger** dokumentatsiya
+- **Clean architecture** (Controller → Service → Repository)
 
+### 🗂️ Modellar
+- **User**: Id, Username, Email, PasswordHash, Role
+- **Category**: Id, Name, Color, UserId  
+- **Transaction**: Id, Amount, Type, CategoryId, UserId, CreatedAt, Note, RowVersion
+- **AuditLog**: Id, UserId, Action, EntityName, EntityId, CreatedAt, OldValue, NewValue
+
+## 🌐 API Endpointlar
+
+### Autentifikatsiya
+- `POST /api/auth/register` - Ro'yxatdan o'tish
+- `POST /api/auth/login` - Kirish
+- `POST /api/auth/refresh` - Token yangilash
+
+### Tranzaksiyalar
+- `GET /api/transactions` - Tranzaksiyalar ro'yxati (filter, sort, pagination)
+- `POST /api/transactions` - Yangi tranzaksiya
+- `PUT /api/transactions/{id}` - Tranzaksiyani tahrirlash
+- `DELETE /api/transactions/{id}` - Tranzaksiyani o'chirish
+
+### Kategoriyalar
+- `GET /api/categories` - Kategoriyalar ro'yxati
+- `POST /api/categories` - Yangi kategoriya
+- `PUT /api/categories/{id}` - Kategoriyani tahrirlash
+- `DELETE /api/categories/{id}` - Kategoriyani o'chirish
+
+### Statistika
+- `GET /api/analytics/summary` - Oylik moliyaviy xulose
+- `GET /api/analytics/trends` - Xarajat tendentsiyalari
+- `GET /api/analytics/categories` - Kategoriya bo'yicha xarajatlar
+- `GET /api/analytics/export` - Excel hisobot
+
+### Monitoring
+- `GET /health` - Tizim holati
+- `GET /health/ready` - Tayyor holati
+- `GET /health/live` - Jonli holati
+
+## 🔧 Konfiguratsiya
+
+### Ma'lumotlar bazasi
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=PersonalFinanceTracker;Username=postgres;Password=your_password;Port=5432"
-  },
-  "JwtSettings": {
-    "SecretKey": "your-secret-key-32-characters-minimum",
-    "Issuer": "PersonalFinanceTracker",
-    "Audience": "PersonalFinanceTracker-Users",
-    "ExpiryMinutes": 60
+    "DefaultConnection": "Host=localhost;Database=PersonalFinanceTracker;Username=postgres;Password=postgres123"
   }
 }
 ```
 
-## API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/refresh` - Refresh JWT token
-- `GET /api/auth/me` - Get current user info
-
-### Categories
-- `GET /api/categories` - Get user categories
-- `POST /api/categories` - Create category
-- `PUT /api/categories/{id}` - Update category
-- `DELETE /api/categories/{id}` - Delete category
-
-### Transactions
-- `GET /api/transactions` - Get user transactions
-- `POST /api/transactions` - Create transaction
-- `PUT /api/transactions/{id}` - Update transaction
-- `DELETE /api/transactions/{id}` - Delete transaction
-- `GET /api/transactions/monthly-balance/{year}/{month}` - Get monthly balance
-
-## Usage Example
-
-1. **Register a user**
-```bash
-curl -X POST http://localhost:5184/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "john_doe",
-    "email": "john@example.com",
-    "password": "Password123!",
-    "confirmPassword": "Password123!"
-  }'
+### Redis
+```json
+{
+  "Redis": {
+    "ConnectionString": "localhost:6379"
+  }
+}
 ```
 
-2. **Create a category**
-```bash
-curl -X POST http://localhost:5184/api/categories \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Food",
-    "color": "#FF6B6B"
-  }'
-```
-
-3. **Add a transaction**
-```bash
-curl -X POST http://localhost:5184/api/transactions \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "amount": 25.50,
-    "type": 2,
-    "categoryId": 1,
-    "note": "Lunch at restaurant"
-  }'
-```
-
-## Docker Deployment
+## 🧪 Testlar
 
 ```bash
-# Build and run with Docker Compose
-docker-compose up --build
+# Barcha testlarni ishga tushirish
+dotnet test
 
-# Or run individual services
-docker build -t finance-tracker .
-docker run -p 5184:80 finance-tracker
+# Test coverage bilan
+dotnet test --collect:"XPlat Code Coverage"
 ```
 
-## Testing
+## 📊 Monitoring
 
+- **Health Dashboard**: `http://localhost:8090`
+- **API**: `http://localhost:8080`
+- **Swagger**: `http://localhost:8080/swagger`
+
+## 🐳 Docker Setup
+
+### Nega Hybrid Deployment?
+
+Bu loyiha **hybrid containerization** yondashuvini ishlatadi:
+- **Infrastructure xizmatlar** (PostgreSQL, Redis) Docker'da - izchillik uchun
+- **Application xizmatlar** (API, Worker) local - tez development uchun
+- **To'liq containerization** 
+
+### Afzalliklar:
+- ⚡ **Tez development** (container qayta build kerak emas)
+- 🔧 **Oson debugging** IDE integratsiyasi bilan
+- 🏗️ **Production parity** infrastructure uchun Docker orqali
+- 📈 **Scalable architecture** orchestration uchun tayyor
+
+## 🚀 Kirish
+
+### Xizmatlarni tekshirish
 ```bash
-# Run unit tests
-dotnet test src/PersonalFinanceTracker.Tests.Unit
+# Containerlar holatini tekshirish
+docker ps
 
-# Run integration tests
-dotnet test src/PersonalFinanceTracker.Tests.Integration
+# Database ulanishini tekshirish
+docker exec -it pft_postgres_dev psql -U postgres -d PersonalFinanceTracker
+
+# Redis ulanishini tekshirish
+docker exec -it pft_redis_dev redis-cli ping
 ```
 
-## Thank You
+### Muammolarni hal qilish
+1. **Port conflicts**: docker-compose.yml da portlarni o'zgartiring
+2. **Database migrations**: `dotnet ef database update` ni ishga tushiring
+3. **Missing packages**: `dotnet restore` ni har bir loyihada ishga tushiring
+
+## 📝 Loyiha strukturasi
+
+```
+PersonalFinanceTracker/
+├── src/
+│   ├── PersonalFinanceTracker.API/          # Web API Layer
+│   ├── PersonalFinanceTracker.Application/   # Business Logic
+│   ├── PersonalFinanceTracker.Domain/        # Domain Models
+│   ├── PersonalFinanceTracker.Infrastructure/ # Data Access
+│   ├── PersonalFinanceTracker.Worker/        # Background Services
+│   └── PersonalFinanceTracker.UI/            # Vue.js Frontend
+├── tests/                                   # Test Projects
+├── docker-compose.yml                       # Production Docker
+├── docker-compose.fast.yml                  # Development Docker
+└── README.md

@@ -265,6 +265,8 @@ namespace PersonalFinanceTracker.Infrastructure.Data.Seed
                 await context.Transactions.AddRangeAsync(transactions);
                 await context.SaveChangesAsync();
 
+                
+
                 Console.WriteLine($"✅ {transactions.Count} transactions seeded successfully");
             }
             catch (Exception ex)
