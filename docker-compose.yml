@@ -1,0 +1,110 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: pft_postgres
+    environment:
+      POSTGRES_DB: PersonalFinanceTracker
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - pft_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: pft_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - pft_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Service
+  api:
+    build:
+      context: .
+      dockerfile: src/PersonalFinanceTracker.API/Dockerfile
+    container_name: pft_api
+    ports:
+      - "8080:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=PersonalFinanceTracker;Username=postgres;Password=postgres123
+      - Redis__ConnectionString=redis:6379
+      - JWT__SecretKey=your-super-secret-jwt-key-here-must-be-at-least-32-characters-long
+      - JWT__Issuer=PersonalFinanceTracker
+      - JWT__Audience=PersonalFinanceTracker
+      - JWT__ExpirationMinutes=60
+      - JWT__RefreshTokenExpirationDays=7
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - pft_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Worker Service
+  worker:
+    build:
+      context: .
+      dockerfile: src/PersonalFinanceTracker.Worker/Dockerfile
+    container_name: pft_worker
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=PersonalFinanceTracker;Username=postgres;Password=postgres123
+      - Redis__ConnectionString=redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - pft_network
+    restart: unless-stopped
+
+  # UI Service
+  ui:
+    build:
+      context: ./src/PersonalFinanceTracker.UI
+      dockerfile: Dockerfile
+    container_name: pft_ui
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    networks:
+      - pft_network
+    environment:
+      - VITE_API_URL=http://localhost:8080/api
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  pft_network:
+    driver: bridge
