@@ -31,6 +31,28 @@ dotnet run
 docker-compose up --build
 ```
 
+### 3-usul: Agar hech qaysi biri ish bermasa:
+
+# Server side
+```bash
+cd \src
+```
+```bash
+cd \PersonalFinanceTracker.API
+
+dotnet run build
+```
+
+#Client side
+```bash
+cd \PersonalFinanceTracker.UI
+```
+```bash
+npm install 
+
+npm run dev
+```
+
 ## 🔧 Texnik stack
 
 - **Backend**: ASP.NET Core 8.0, C#
